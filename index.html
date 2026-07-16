@@ -270,20 +270,22 @@ async function validar(codigo){
 
     status.innerHTML="⏳ Validando inscrição...";
 
+
     try{
 
-        const resposta=await fetch(
+        const resposta = await fetch(
 
-            API+
-
-            "?api=checkin&codigo="+
-
+            API +
+            "?codigo=" +
             encodeURIComponent(codigo)
 
         );
 
-        const dados=await resposta.json();
-                if(dados.status=="ok"){
+
+        const dados = await resposta.json();
+
+
+        if(dados.status=="ok"){
 
             status.innerHTML=
 
@@ -327,6 +329,7 @@ async function validar(codigo){
 
         }
 
+
     }
 
     catch(e){
@@ -342,6 +345,7 @@ async function validar(codigo){
         "</div>";
 
     }
+
 
     status.innerHTML +=
 
