@@ -80,6 +80,60 @@ Aguardando...
 </div>
 
 </div>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
+<script>
+
+let scanner = null;
+
+document.getElementById("btnCamera").addEventListener("click", iniciarCamera);
+
+async function iniciarCamera(){
+
+    const status = document.getElementById("status");
+
+    try{
+
+        scanner = new Html5Qrcode("reader");
+
+        await scanner.start(
+
+            {
+                facingMode: "environment"
+            },
+
+            {
+                fps: 10,
+                qrbox: { width: 250, height: 250 }
+            },
+
+            function(decodedText){
+
+                status.innerHTML =
+                "QR Code lido:<br><strong>" + decodedText + "</strong>";
+
+            },
+
+            function(error){
+
+                // Ignora erros de leitura
+
+            }
+
+        );
+
+    }
+
+    catch(e){
+
+        console.error(e);
+
+        status.innerHTML = e;
+
+    }
+
+}
+
+</script>
 </body>
 </html>
