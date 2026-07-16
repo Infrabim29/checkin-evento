@@ -1,60 +1,155 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Check-in - 4º Encontro</title>
 
 <style>
 
-body{
+*{
     margin:0;
+    padding:0;
+    box-sizing:border-box;
     font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
     background:#f2f2f2;
+
     display:flex;
+
     justify-content:center;
+
     align-items:center;
+
     min-height:100vh;
+
+    padding:20px;
+
 }
 
 .card{
-    width:95%;
-    max-width:500px;
+
+    width:100%;
+    max-width:550px;
+
     background:white;
+
     border-radius:20px;
+
     padding:30px;
-    box-shadow:0 10px 30px rgba(0,0,0,.2);
-    text-align:center;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.20);
+
 }
 
 h1{
+
+    text-align:center;
+
     color:#C62828;
+
+    margin-bottom:10px;
+
+}
+
+.subtitulo{
+
+    text-align:center;
+
+    color:#666;
+
+    margin-bottom:25px;
+
 }
 
 #reader{
-    margin-top:20px;
+
+    width:100%;
+
     border:3px dashed #C62828;
+
     border-radius:15px;
+
+    overflow:hidden;
+
     min-height:320px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    background:#fafafa;
+
+}
+
+.status{
+
+    margin-top:25px;
+
+    text-align:center;
+
+    font-size:18px;
+
+    font-weight:bold;
+
+    color:#555;
+
 }
 
 button{
-    margin-top:20px;
+
     width:100%;
+
+    margin-top:20px;
+
     padding:15px;
+
     border:none;
-    border-radius:10px;
+
+    border-radius:12px;
+
     background:#2E7D32;
+
     color:white;
+
     font-size:18px;
+
+    font-weight:bold;
+
     cursor:pointer;
+
 }
 
-#status{
-    margin-top:20px;
-    font-weight:bold;
-    color:#555;
+button:hover{
+
+    opacity:.9;
+
+}
+
+.ok{
+
+    color:#2E7D32;
+
+}
+
+.erro{
+
+    color:#C62828;
+
+}
+
+.alerta{
+
+    color:#FF9800;
+
 }
 
 </style>
@@ -65,60 +160,95 @@ button{
 
 <div class="card">
 
-<h1>📷 CHECK-IN</h1>
+<h1>CHECK-IN</h1>
 
-<p>4º Encontro de Carros e Motos</p>
+<p class="subtitulo">
 
-<div id="reader"></div>
+4º Encontro de Carros e Motos
+
+</p>
+
+<div id="reader">
+
+Aguardando câmera...
+
+</div>
 
 <button id="btnCamera">
-Iniciar câmera
+
+📷 INICIAR CÂMERA
+
 </button>
 
-<div id="status">
-Aguardando...
+<div id="status" class="status">
+
+Clique para iniciar a câmera.
+
 </div>
 
 </div>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <script>
 
-let scanner = null;
+const API="https://script.google.com/macros/s/AKfycbykbqRCX6p6vWqBhWhgjG0gXao7dlS3kfYOQCNU8nPARmNfqLaH6jTJesEfhViNimYV/exec";
 
-document.getElementById("btnCamera").addEventListener("click", iniciarCamera);
+let scanner=null;
+
+let lendo=false;
+
+document
+.getElementById("btnCamera")
+.addEventListener("click",iniciarCamera);
 
 async function iniciarCamera(){
 
-    const status = document.getElementById("status");
+    lendo=false;
+
+    document.getElementById("btnCamera").style.display="none";
+
+    document.getElementById("status").innerHTML="📷 Abrindo câmera...";
+
+    scanner=new Html5Qrcode("reader");
 
     try{
-
-        scanner = new Html5Qrcode("reader");
 
         await scanner.start(
 
             {
-                facingMode: "environment"
+
+                facingMode:"environment"
+
             },
 
             {
-                fps: 10,
-                qrbox: { width: 250, height: 250 }
+
+                fps:10,
+
+                qrbox:{
+
+                    width:250,
+
+                    height:250
+
+                }
+
             },
 
-            function(decodedText){
+            async function(decodedText){
 
-                status.innerHTML =
-                "QR Code lido:<br><strong>" + decodedText + "</strong>";
+                if(lendo)return;
+
+                lendo=true;
+
+                await scanner.stop();
+
+                validar(decodedText);
 
             },
 
-            function(error){
-
-                // Ignora erros de leitura
-
-            }
+            function(error){}
 
         );
 
@@ -126,14 +256,113 @@ async function iniciarCamera(){
 
     catch(e){
 
-        console.error(e);
+        document.getElementById("status").innerHTML=e;
 
-        status.innerHTML = e;
+        document.getElementById("btnCamera").style.display="block";
 
     }
 
 }
 
+async function validar(codigo){
+
+    const status=document.getElementById("status");
+
+    status.innerHTML="⏳ Validando inscrição...";
+
+    try{
+
+        const resposta=await fetch(
+
+            API+
+
+            "?api=checkin&codigo="+
+
+            encodeURIComponent(codigo)
+
+        );
+
+        const dados=await resposta.json();
+                if(dados.status=="ok"){
+
+            status.innerHTML=
+
+            "<div class='ok'>" +
+
+            "<h2>✅ CHECK-IN REALIZADO</h2>" +
+
+            "<br><strong>"+dados.nome+"</strong>" +
+
+            "<br>"+dados.inscricao +
+
+            "</div>";
+
+        }
+
+        else if(dados.status=="duplicado"){
+
+            status.innerHTML=
+
+            "<div class='alerta'>" +
+
+            "<h2>⚠ CHECK-IN JÁ REALIZADO</h2>" +
+
+            "<br><strong>"+dados.nome+"</strong>" +
+
+            "<br>Horário: "+dados.hora +
+
+            "</div>";
+
+        }
+
+        else{
+
+            status.innerHTML=
+
+            "<div class='erro'>" +
+
+            "<h2>❌ INSCRIÇÃO NÃO ENCONTRADA</h2>" +
+
+            "</div>";
+
+        }
+
+    }
+
+    catch(e){
+
+        status.innerHTML=
+
+        "<div class='erro'>" +
+
+        "<h2>❌ ERRO</h2>" +
+
+        "<br>"+e+
+
+        "</div>";
+
+    }
+
+    status.innerHTML +=
+
+    "<br><button onclick='novoLeitor()'>Próximo participante</button>";
+
+}
+
+function novoLeitor(){
+
+    document.getElementById("reader").innerHTML="";
+
+    document.getElementById("status").innerHTML="Clique para iniciar a câmera.";
+
+    document.getElementById("btnCamera").style.display="block";
+
+    iniciarCamera();
+
+}
+
 </script>
+
 </body>
+
 </html>
